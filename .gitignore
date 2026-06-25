@@ -1,33 +1,23 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Root .gitignore for No-dues Portal Monorepo
 
-# Node / Dependency directories
-node_modules/
-dist/
-dist-ssr/
-*.local
+# Frontend
+no-dues-portal/node_modules/
+no-dues-portal/dist/
+no-dues-portal/.env
+no-dues-portal/.env.local
 
-# Editor / OS files
-.vscode/*
-!.vscode/extensions.json
-.idea/
+# Backend
+no_dues_backend/venv/
+no_dues_backend/pg_data/
+no_dues_backend/.env
+no_dues_backend/__pycache__/
+no_dues_backend/**/*.pyc
+no_dues_backend/db.sqlite3
+no_dues_backend/media/
+no_dues_backend/staticfiles/
+no_dues_backend/pg_log
+
+# OS/Logs
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Local Environment Variables
-.env
-.env.production
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+Thumbs.db
+*.log
