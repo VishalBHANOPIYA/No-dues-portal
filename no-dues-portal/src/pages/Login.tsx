@@ -45,28 +45,28 @@ export const Login: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || "Invalid credentials. Please verify your email, password, and role.")
+        throw new Error(errorData.detail || errorData.message || "Invalid credentials. Please verify your email, password, and role.")
       }
 
       const resData = await response.json()
       
       // Store credentials in localStorage
-      localStorage.setItem("token", resData.token)
+      localStorage.setItem("token", resData.access_token || resData.token)
       localStorage.setItem("role", data.role)
       localStorage.setItem("email", data.email)
-      
+
       toast.success(`Welcome back! Logged in as ${data.role}`)
       navigate("/dashboard")
     } catch (error: any) {
       console.error("Login request error:", error)
-      
+
       // Check if it's a network error (backend not running)
       if (error.message && (error.message.includes("Failed to fetch") || error.message.includes("Load failed") || error.name === "TypeError")) {
         // Log in using demo credentials so user can preview the dashboard layout
         localStorage.setItem("token", "demo-jwt-token-cdgi-xyz")
         localStorage.setItem("role", data.role)
         localStorage.setItem("email", data.email)
-        
+
         toast.success(`Demo Mode: Welcome back! Logged in as ${data.role}`)
         navigate("/dashboard")
       } else {
@@ -87,10 +87,10 @@ export const Login: React.FC = () => {
           Enter your university credentials to request or manage academic clearances.
         </CardDescription>
       </CardHeader>
-      
+
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
-          
+
           {/* Email Field */}
           <div className="space-y-1.5">
             <Label htmlFor="email" className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">

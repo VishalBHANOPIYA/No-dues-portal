@@ -8,6 +8,8 @@ echo "=== Starting PostgreSQL Server ==="
 if /usr/lib/postgresql/17/bin/pg_isready -h localhost -p 5432 >/dev/null 2>&1; then
     echo "PostgreSQL is already running."
 else
+    echo "Cleaning stale lock files..."
+    rm -f "$BACKEND_DIR/pg_data/postmaster.pid" "$BACKEND_DIR/pg_data/.s.PGSQL.5432" "$BACKEND_DIR/pg_data/.s.PGSQL.5432.lock"
     echo "Starting PostgreSQL from local pg_data..."
     /usr/lib/postgresql/17/bin/pg_ctl -D "$BACKEND_DIR/pg_data" -l "$BACKEND_DIR/pg_data/pg_log" start
     sleep 2
