@@ -35,46 +35,44 @@ interface RecentSubmission {
 export const FacultyDashboard: React.FC = () => {
   const navigate = useNavigate()
   const [stats, setStats] = useState<FacultyStats>({
-    subjects: 3,
-    pending: 4,
-    approved: 12,
-    rejected: 2,
+    subjects: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
   })
   const [submissions, setSubmissions] = useState<RecentSubmission[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
-      // Attempt to load submissions and subjects from API
+      setError("")
+      // Load submissions and subjects from API
       const [submissionsRes, subjectsRes] = await Promise.all([
-        api.get("/api/faculty/submissions"),
-        api.get("/api/faculty/subjects")
+        api.get("/api/faculty/submissions/"),
+        api.get("/api/faculty/subjects/")
       ])
       
       const subList = submissionsRes.data || []
-      const subCount = subjectsRes.data?.length || 3
+      const subCount = subjectsRes.data?.length || 0
       
       setStats({
         subjects: subCount,
         pending: subList.filter((s: any) => s.status === "Pending").length,
         approved: subList.filter((s: any) => s.status === "Approved").length,
-        rejected: subList.filter((s: any) => s.status === "Rejected").length,
+        rejected: subList.filter((s: any) => s.status === "Rejected" || s.status === "Resubmission Requested").length,
       })
       
       setSubmissions(subList.slice(0, 5))
-    } catch (error) {
-      console.warn("Faculty API offline, using premium mock dashboard stats & submissions")
-      
-      // Fallback mock submissions
-      const mockSubmissions: RecentSubmission[] = [
-        { id: "sub-201", studentName: "Aarav Sharma", enrollmentNo: "0812CS221001", subject: "Database Management Systems Lab", taskType: "Lab Manual", submittedAt: "2026-06-24", status: "Pending" },
-        { id: "sub-202", studentName: "Ananya Patel", enrollmentNo: "0812IT221045", subject: "Compiler Design Lab", taskType: "Assignment", submittedAt: "2026-06-23", status: "Pending" },
-        { id: "sub-203", studentName: "Devansh Dixit", enrollmentNo: "0812EC221012", subject: "Database Management Systems Lab", taskType: "Mini Project", submittedAt: "2026-06-22", status: "Approved" },
-        { id: "sub-204", studentName: "Riya Verma", enrollmentNo: "0812CS221088", subject: "Information Security Lab", taskType: "Certificate", submittedAt: "2026-06-20", status: "Rejected" },
-        { id: "sub-205", studentName: "Kabir Mehta", enrollmentNo: "0812ME221008", subject: "Compiler Design Lab", taskType: "Lab Manual", submittedAt: "2026-06-24", status: "Pending" },
-      ]
-      setSubmissions(mockSubmissions)
+    } catch (err: any) {
+      console.error("Faculty dashboard API error:", err)
+      if (err?.response?.status === 404) {
+        setError("Faculty profile not found. Please contact HOD to set up your profile.")
+      } else {
+        setError("Unable to load dashboard data. Please try again.")
+      }
+      setSubmissions([])
     } finally {
       setLoading(false)
     }
@@ -112,6 +110,14 @@ export const FacultyDashboard: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-center gap-3">
+          <XCircle className="h-5 w-5 text-rose-500 shrink-0" />
+          <p className="text-sm text-rose-700">{error}</p>
+        </div>
+      )}
 
       {/* 4 Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
