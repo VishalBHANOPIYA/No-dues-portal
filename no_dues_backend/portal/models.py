@@ -7,6 +7,7 @@ class Faculty(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='faculty_profile'
     )
     department = models.CharField(max_length=100)
+    phone = models.CharField(max_length=20, blank=True, default='')
 
     class Meta:
         verbose_name_plural = 'Faculties'

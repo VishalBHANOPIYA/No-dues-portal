@@ -21,3 +21,5 @@ no_dues_backend/pg_log
 .DS_Store
 Thumbs.db
 *.log
+bin/
+

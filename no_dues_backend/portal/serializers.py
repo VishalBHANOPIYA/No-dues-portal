@@ -26,8 +26,11 @@ class FacultyWriteSerializer(serializers.Serializer):
     """Used by HOD/Admin to add a faculty record."""
     email = serializers.EmailField()
     name = serializers.CharField(max_length=255)
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, required=False, default='password123')
     department = serializers.CharField(max_length=100)
+    phone = serializers.CharField(max_length=20, required=False, allow_blank=True, default='')
+    subject_name = serializers.CharField(max_length=150, required=False, allow_blank=True, default='')
+    semester = serializers.CharField(max_length=50, required=False, allow_blank=True, default='VIII')
 
 
 class StudentSerializer(serializers.ModelSerializer):

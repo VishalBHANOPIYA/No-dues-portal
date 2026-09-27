@@ -157,14 +157,18 @@ class AdminFacultyView(APIView):
     permission_classes = [IsAuthenticated, IsHODAdmin]
 
     def get(self, request):
-        faculties = Faculty.objects.all()
+        faculties = Faculty.objects.prefetch_related('subjects').all()
         data = []
         for fac in faculties:
+            subs = [s.subject_name for s in fac.subjects.all()]
             data.append({
                 'id': str(fac.id),
                 'name': fac.user.name or fac.user.email,
                 'email': fac.user.email,
-                'department': fac.department
+                'phone': fac.phone or '',
+                'department': fac.department,
+                'subjects': subs,
+                'subjectName': ', '.join(subs) if subs else 'Not Assigned'
             })
         return Response(data)
 
@@ -173,8 +177,11 @@ class AdminFacultyView(APIView):
         if serializer.is_valid():
             email = serializer.validated_data['email']
             name = serializer.validated_data['name']
-            password = serializer.validated_data['password']
+            password = serializer.validated_data.get('password') or 'password123'
             department = serializer.validated_data['department']
+            phone = serializer.validated_data.get('phone', '')
+            subject_name = serializer.validated_data.get('subject_name', '')
+            semester = serializer.validated_data.get('semester', 'VIII')
 
             if User.objects.filter(email=email).exists():
                 return Response({'message': 'User with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -187,16 +194,42 @@ class AdminFacultyView(APIView):
                 name=name
             )
             # Create Faculty Profile
-            fac = Faculty.objects.create(user=user, department=department)
+            fac = Faculty.objects.create(user=user, department=department, phone=phone)
+
+            # Assign subject if specified
+            allocated_subs = []
+            if subject_name:
+                sub = Subject.objects.filter(subject_name=subject_name).first()
+                if sub:
+                    sub.faculty = fac
+                    if semester:
+                        sub.semester = semester
+                    sub.save()
+                    allocated_subs.append(sub.subject_name)
+                else:
+                    import random
+                    sub_code = f"SUB-{random.randint(100, 999)}"
+                    created_sub = Subject.objects.create(
+                        subject_code=sub_code,
+                        subject_name=subject_name,
+                        faculty=fac,
+                        semester=semester or 'VIII',
+                        branch=department
+                    )
+                    allocated_subs.append(created_sub.subject_name)
 
             return Response({
                 'id': str(fac.id),
                 'name': user.name,
                 'email': user.email,
-                'department': fac.department
+                'phone': fac.phone,
+                'department': fac.department,
+                'subjects': allocated_subs,
+                'subjectName': ', '.join(allocated_subs) if allocated_subs else 'Not Assigned'
             }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class AdminFacultyDeleteView(APIView):

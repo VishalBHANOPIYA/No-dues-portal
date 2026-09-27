@@ -90,11 +90,41 @@ class TokenRefreshCustomView(APIView):
 
 class UserProfileView(APIView):
     """
-    GET /api/auth/me
-    Returns current user details (JWT-protected)
+    GET /api/auth/me - Returns current user details
+    PATCH /api/auth/me - Updates current user profile details
     """
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request):
+        user = request.user
+        email = request.data.get('email')
+        name = request.data.get('name')
+        phone = request.data.get('phone')
+        department = request.data.get('department')
+
+        if email and email.strip().lower() != user.email.lower():
+            email_clean = email.strip().lower()
+            if User.objects.filter(email=email_clean).exclude(id=user.id).exists():
+                return Response(
+                    {"message": "A user with this email address already exists."}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            user.email = email_clean
+
+        if name is not None:
+            user.name = name.strip()
+        if phone is not None:
+            user.phone = phone.strip()
+        if department is not None:
+            user.department = department.strip()
+
+        password = request.data.get('password')
+        if password and len(str(password).strip()) > 0:
+            user.set_password(str(password).strip())
+
+        user.save()
+        return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
