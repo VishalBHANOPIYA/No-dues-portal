@@ -348,17 +348,7 @@ export const HODAdminPanel: React.FC = () => {
           <Users className="h-4 w-4" />
           Faculty Management
         </button>
-        <button
-          onClick={() => setActiveTab("allocation")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all
-            ${activeTab === "allocation" 
-              ? "border-primary text-primary font-semibold bg-primary/5 rounded-t-lg" 
-              : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"}
-          `}
-        >
-          <BookOpen className="h-4 w-4" />
-          Subject Allocation
-        </button>
+
         <button
           onClick={() => setActiveTab("semester")}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all
@@ -613,133 +603,7 @@ export const HODAdminPanel: React.FC = () => {
           </div>
         )}
 
-        {/* 2. SUBJECT ALLOCATION */}
-        {activeTab === "allocation" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Allocation Form */}
-            <Card className="border-slate-200 bg-white shadow-sm lg:col-span-1">
-              <CardHeader className="border-b border-slate-100">
-                <CardTitle className="text-slate-800 text-sm font-bold flex items-center gap-1.5">
-                  <PlusCircle className="h-4 w-4 text-primary" />
-                  Assign Course Syllabus to Faculty
-                </CardTitle>
-                <CardDescription className="text-[11px] text-slate-400">
-                  Map courses to professors responsible for reviewing compliance tasks.
-                </CardDescription>
-              </CardHeader>
-              <form onSubmit={handleAllocateSubject}>
-                <CardContent className="space-y-4 pt-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="allocFac" className="text-[11px] font-bold text-slate-600">Select Professor</Label>
-                    <Select 
-                      id="allocFac"
-                      value={allocateFacultyId}
-                      onChange={(e) => setAllocateFacultyId(e.target.value)}
-                    >
-                      <option value="">-- Choose Faculty --</option>
-                      {faculties.map((f) => (
-                        <option key={f.id} value={f.id}>{f.name} ({f.department})</option>
-                      ))}
-                    </Select>
-                  </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="allocSub" className="text-[11px] font-bold text-slate-600">Course / Subject</Label>
-                    <Select 
-                      id="allocSub"
-                      value={allocateSubjectName}
-                      onChange={(e) => setAllocateSubjectName(e.target.value)}
-                    >
-                      {PREDEFINED_SUBJECTS.map((sub) => (
-                        <option key={sub} value={sub}>{sub}</option>
-                      ))}
-                      <option value="CUSTOM">+ Add Custom Subject...</option>
-                    </Select>
-                  </div>
-
-                  {/* Custom Subject Input */}
-                  {allocateSubjectName === "CUSTOM" && (
-                    <div className="space-y-1.5 pl-2 border-l-2 border-primary/40">
-                      <Label htmlFor="customAllocSub" className="text-[11px] font-bold text-slate-700">
-                        Custom Subject Name *
-                      </Label>
-                      <Input 
-                        id="customAllocSub"
-                        type="text" 
-                        placeholder="Enter full subject name..."
-                        value={customAllocateSubject}
-                        onChange={(e) => setCustomAllocateSubject(e.target.value)}
-                        required
-                      />
-                    </div>
-                  )}
-
-                  {/* Targeted Semester Dropdown (3rd to 8th) */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="allocSem" className="text-[11px] font-bold text-slate-600">Targeted Semester</Label>
-                    <Select 
-                      id="allocSem"
-                      value={allocateSemester}
-                      onChange={(e) => setAllocateSemester(e.target.value)}
-                    >
-                      {SEMESTER_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </Select>
-                  </div>
-                </CardContent>
-                <CardFooter className="border-t border-slate-100 pt-4 flex justify-end">
-                  <Button type="submit" size="sm" className="text-xs bg-primary text-white hover:bg-primary/95">
-                    Allocate Course
-                  </Button>
-                </CardFooter>
-              </form>
-            </Card>
-
-            {/* Allocation Table */}
-            <Card className="border-slate-200 bg-white shadow-sm lg:col-span-2 overflow-hidden">
-              <CardHeader className="border-b border-slate-100">
-                <CardTitle className="text-slate-800 text-sm font-bold">Active Course Assignments</CardTitle>
-                <CardDescription className="text-[11px] text-slate-450">Active map of courses, assigned professors, and semesters.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-0 overflow-x-auto">
-                <table className="w-full text-left text-xs whitespace-nowrap">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                      <th className="py-3 px-4">Subject Course</th>
-                      <th className="py-3 px-4">Allocated Professor</th>
-                      <th className="py-3 px-4">Semester</th>
-                      <th className="py-3 px-4 text-center">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-650">
-                    {allocations.map((a) => (
-                      <tr key={a.id} className="hover:bg-slate-50/50">
-                        <td className="py-3 px-4 font-semibold text-slate-850">{a.subjectName}</td>
-                        <td className="py-3 px-4 text-slate-700 font-medium">{a.facultyName}</td>
-                        <td className="py-3 px-4 font-mono text-[11px] text-slate-600">
-                          <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-semibold">
-                            {a.semester || "VIII"} Sem
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => setAllocations(allocations.filter(al => al.id !== a.id))}
-                            className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-1.5 h-auto rounded"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {/* 3. SEMESTER CONTROL */}
         {activeTab === "semester" && (
