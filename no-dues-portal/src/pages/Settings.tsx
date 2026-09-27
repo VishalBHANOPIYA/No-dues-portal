@@ -17,7 +17,8 @@ import {
   BookOpen,
   Users,
   Archive,
-  Loader2
+  Loader2,
+  Mail
 } from "lucide-react"
 import toast from "react-hot-toast"
 import { api } from "@/services/api"
