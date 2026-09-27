@@ -10,13 +10,20 @@ import {
   EyeOff, 
   CheckCircle2, 
   ShieldCheck, 
-  Loader2 
+  Loader2,
+  Camera,
+  Trash2,
+  Upload
 } from "lucide-react"
 import toast from "react-hot-toast"
 
 export const UserProfile: React.FC = () => {
   const role = localStorage.getItem("role") || "HOD-Admin"
   const isHOD = role === "HOD-Admin" || role === "hod_admin" || role === "HOD"
+
+  // Avatar state
+  const [avatar, setAvatar] = useState<string>(localStorage.getItem("avatar") || "")
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null)
 
   // Form states
   const [displayName, setDisplayName] = useState(
@@ -51,6 +58,11 @@ export const UserProfile: React.FC = () => {
         if (res.data) {
           if (res.data.name) setDisplayName(res.data.name)
           if (res.data.email) setEmail(res.data.email)
+          if (res.data.avatar) {
+            setAvatar(res.data.avatar)
+            localStorage.setItem("avatar", res.data.avatar)
+            window.dispatchEvent(new Event("avatar_updated"))
+          }
           if (res.data.phone) {
             // Clean phone string if it contains prefix
             const cleanPhone = res.data.phone.replace(/^\+91\s*/, "")
@@ -63,6 +75,69 @@ export const UserProfile: React.FC = () => {
     }
     fetchUser()
   }, [])
+
+  // Handle Photo Upload & Compression
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file (PNG, JPG, WEBP).")
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image file size should be less than 5MB.")
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const img = new Image()
+      img.onload = () => {
+        // Resize to high-res avatar (max 360x360)
+        const canvas = document.createElement("canvas")
+        const maxSize = 360
+        let { width, height } = img
+
+        if (width > height) {
+          if (width > maxSize) {
+            height = Math.round((height * maxSize) / width)
+            width = maxSize
+          }
+        } else {
+          if (height > maxSize) {
+            width = Math.round((width * maxSize) / height)
+            height = maxSize
+          }
+        }
+
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext("2d")
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height)
+          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.85)
+          setAvatar(compressedDataUrl)
+          localStorage.setItem("avatar", compressedDataUrl)
+          window.dispatchEvent(new Event("avatar_updated"))
+          toast.success("Photo uploaded! Remember to save changes.")
+        }
+      }
+      img.src = event.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemovePhoto = () => {
+    setAvatar("")
+    localStorage.removeItem("avatar")
+    window.dispatchEvent(new Event("avatar_updated"))
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+    toast.success("Profile photo removed.")
+  }
 
   // Handle Save Changes
   const handleSaveChanges = async (e: React.FormEvent) => {
@@ -89,7 +164,8 @@ export const UserProfile: React.FC = () => {
       const payload: any = {
         name: displayName.trim(),
         email: email.trim().toLowerCase(),
-        phone: fullPhone
+        phone: fullPhone,
+        avatar: avatar
       }
 
       if (newPassword.trim()) {
@@ -100,12 +176,19 @@ export const UserProfile: React.FC = () => {
       if (res.data) {
         if (res.data.name) setDisplayName(res.data.name)
         if (res.data.email) setEmail(res.data.email)
+        if (res.data.avatar !== undefined) {
+          setAvatar(res.data.avatar)
+          localStorage.setItem("avatar", res.data.avatar)
+          window.dispatchEvent(new Event("avatar_updated"))
+        }
       }
 
       // Update localStorage
       localStorage.setItem("name", displayName.trim())
       localStorage.setItem("email", email.trim().toLowerCase())
       localStorage.setItem("phone", fullPhone)
+      localStorage.setItem("avatar", avatar)
+      window.dispatchEvent(new Event("avatar_updated"))
 
       setNewPassword("")
       setConfirmPassword("")
@@ -116,6 +199,8 @@ export const UserProfile: React.FC = () => {
       localStorage.setItem("name", displayName.trim())
       localStorage.setItem("email", email.trim().toLowerCase())
       localStorage.setItem("phone", phone.trim())
+      localStorage.setItem("avatar", avatar)
+      window.dispatchEvent(new Event("avatar_updated"))
       setNewPassword("")
       setConfirmPassword("")
       toast.success("Account settings updated successfully!")
@@ -137,12 +222,67 @@ export const UserProfile: React.FC = () => {
       <div className="max-w-xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8">
           
-          {/* Avatar and User Title */}
+          {/* Avatar and User Title with Photo Upload */}
           <div className="flex flex-col items-center text-center mb-6">
-            <div className="h-16 w-16 rounded-full bg-indigo-600 text-white font-extrabold text-2xl flex items-center justify-center shadow-md">
-              {initialLetter}
+            {/* Hidden file input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageFileChange}
+              accept="image/*"
+              className="hidden"
+            />
+
+            {/* Interactive Avatar Frame */}
+            <div 
+              className="relative group cursor-pointer mb-2" 
+              onClick={() => fileInputRef.current?.click()}
+              title="Click to choose profile picture"
+            >
+              {avatar ? (
+                <img
+                  src={avatar}
+                  alt={displayName}
+                  className="h-20 w-20 rounded-full object-cover shadow-lg border-2 border-primary/20 ring-4 ring-primary/5 transition-transform group-hover:scale-105"
+                />
+              ) : (
+                <div className="h-20 w-20 rounded-full bg-gradient-to-br from-indigo-500 via-indigo-600 to-primary text-white font-extrabold text-2xl flex items-center justify-center shadow-lg border-2 border-white ring-4 ring-primary/5 transition-transform group-hover:scale-105">
+                  {initialLetter}
+                </div>
+              )}
+
+              {/* Camera Badge Icon overlay */}
+              <div
+                className="absolute bottom-0 right-0 p-1.5 bg-primary text-white rounded-full shadow-md hover:bg-primary/90 transition-all border-2 border-white"
+                title="Upload profile picture"
+              >
+                <Camera className="h-3.5 w-3.5" />
+              </div>
             </div>
-            <h2 className="text-lg font-bold text-slate-850 mt-3">{displayName}</h2>
+
+            {/* Photo Action Buttons */}
+            <div className="flex items-center gap-2 mt-1">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1 text-[11px] font-medium text-primary hover:text-primary/80 transition-colors px-2 py-1 rounded-md hover:bg-primary/5"
+              >
+                <Upload className="h-3 w-3" />
+                {avatar ? "Change Photo" : "Add Image"}
+              </button>
+              {avatar && (
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  className="flex items-center gap-1 text-[11px] font-medium text-rose-500 hover:text-rose-700 transition-colors px-2 py-1 rounded-md hover:bg-rose-50"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  Remove
+                </button>
+              )}
+            </div>
+
+            <h2 className="text-lg font-bold text-slate-850 mt-2">{displayName}</h2>
             <p className="text-xs text-slate-400 font-mono mt-0.5">
               @{username} | {isHOD ? "HOD" : role}
             </p>

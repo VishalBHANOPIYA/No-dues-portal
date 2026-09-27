@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Outlet, NavLink, useNavigate } from "react-router-dom"
 import { 
   LayoutDashboard, 
@@ -28,7 +28,16 @@ export const DashboardLayout: React.FC = () => {
   // User credentials from localStorage
   const role = localStorage.getItem("role") || "Student"
   const email = localStorage.getItem("email") || "student@cdgi.edu.in"
-  const name = email.split("@")[0].replace(".", " ").toUpperCase()
+  const name = localStorage.getItem("name") || email.split("@")[0].replace(".", " ").toUpperCase()
+  const [avatar, setAvatar] = useState<string>(localStorage.getItem("avatar") || "")
+
+  useEffect(() => {
+    const syncAvatar = () => {
+      setAvatar(localStorage.getItem("avatar") || "")
+    }
+    window.addEventListener("avatar_updated", syncAvatar)
+    return () => window.removeEventListener("avatar_updated", syncAvatar)
+  }, [])
 
   const handleLogout = () => {
     localStorage.removeItem("token")
@@ -120,9 +129,17 @@ export const DashboardLayout: React.FC = () => {
               <p className="text-xs font-semibold text-slate-800">{name}</p>
               <p className="text-[10px] font-medium text-slate-500 capitalize">{role}</p>
             </div>
-            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-primary flex items-center justify-center text-white font-bold text-sm shadow-md border border-white">
-              {name.charAt(0)}
-            </div>
+            {avatar ? (
+              <img 
+                src={avatar} 
+                alt={name} 
+                className="h-9 w-9 rounded-full object-cover shadow-md border border-white"
+              />
+            ) : (
+              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-primary flex items-center justify-center text-white font-bold text-sm shadow-md border border-white">
+                {name.charAt(0)}
+              </div>
+            )}
             
             <button 
               onClick={handleLogout}

@@ -121,6 +121,9 @@ class UserProfileView(APIView):
             user.phone = phone.strip()
         if department is not None:
             user.department = department.strip()
+        avatar = request.data.get('avatar')
+        if avatar is not None:
+            user.avatar = avatar
 
         password = request.data.get('password')
         if password and len(str(password).strip()) > 0:
