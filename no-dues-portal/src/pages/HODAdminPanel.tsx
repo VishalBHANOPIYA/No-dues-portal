@@ -123,6 +123,7 @@ export const HODAdminPanel: React.FC = () => {
   const [allocateFacultyId, setAllocateFacultyId] = useState("")
   const [allocateSubjectName, setAllocateSubjectName] = useState(PREDEFINED_SUBJECTS[0])
   const [allocateSemester, setAllocateSemester] = useState("VIII")
+  const [customAllocateSubject, setCustomAllocateSubject] = useState("")
 
   // Semester Management State
   const [isCycleOpen, setIsCycleOpen] = useState(true)
@@ -268,8 +269,17 @@ export const HODAdminPanel: React.FC = () => {
       return
     }
 
+    const resolvedSubject = allocateSubjectName === "CUSTOM"
+      ? customAllocateSubject.trim()
+      : allocateSubjectName
+
+    if (!resolvedSubject) {
+      toast.error("Please enter a custom subject name.")
+      return
+    }
+
     const exists = allocations.find(
-      a => a.facultyName === fac.name && a.subjectName === allocateSubjectName && a.semester === allocateSemester
+      a => a.facultyName === fac.name && a.subjectName === resolvedSubject && a.semester === allocateSemester
     )
     if (exists) {
       toast.error("This allocation already exists.")
@@ -279,11 +289,12 @@ export const HODAdminPanel: React.FC = () => {
     const newAlloc: Allocation = {
       id: `alloc-${Date.now()}`,
       facultyName: fac.name,
-      subjectName: allocateSubjectName,
+      subjectName: resolvedSubject,
       semester: allocateSemester
     }
     setAllocations([...allocations, newAlloc])
-    toast.success(`Allocated ${allocateSubjectName} (${allocateSemester} Sem) to ${fac.name}!`)
+    setCustomAllocateSubject("")
+    toast.success(`Allocated ${resolvedSubject} (${allocateSemester} Sem) to ${fac.name}!`)
   }
 
   // Toggle Clearance Cycle
@@ -642,8 +653,26 @@ export const HODAdminPanel: React.FC = () => {
                       {PREDEFINED_SUBJECTS.map((sub) => (
                         <option key={sub} value={sub}>{sub}</option>
                       ))}
+                      <option value="CUSTOM">+ Add Custom Subject...</option>
                     </Select>
                   </div>
+
+                  {/* Custom Subject Input */}
+                  {allocateSubjectName === "CUSTOM" && (
+                    <div className="space-y-1.5 pl-2 border-l-2 border-primary/40">
+                      <Label htmlFor="customAllocSub" className="text-[11px] font-bold text-slate-700">
+                        Custom Subject Name *
+                      </Label>
+                      <Input 
+                        id="customAllocSub"
+                        type="text" 
+                        placeholder="Enter full subject name..."
+                        value={customAllocateSubject}
+                        onChange={(e) => setCustomAllocateSubject(e.target.value)}
+                        required
+                      />
+                    </div>
+                  )}
 
                   {/* Targeted Semester Dropdown (3rd to 8th) */}
                   <div className="space-y-1.5">
